@@ -12,7 +12,7 @@ Version: 1.0.0
 Author URI: http://localhost
 */
 
-$plugin_file = '/blogai/blogai.php';
+$plugin_file = 'blogai/blogai.php';
 
 $servername = 'localhost';
 $username = 'root';
@@ -85,8 +85,12 @@ function create_blogai_table() {
     )";
 
 
-    if ($conn->query($create_table_sql) === TRUE) debug_to_console('Table blogai created successfully');
-    else debug_to_console('Error creating table: ' . $conn->error);
+    if ($conn->query($create_table_sql) === TRUE) {
+        debug_to_console('Table blogai created successfully');
+    } else {
+        debug_to_console('Error creating table: ' . $conn->error);
+    }
+
 }
 
 function on_delete_plugin() {
@@ -109,7 +113,7 @@ if (file_exists(WP_PLUGIN_DIR . '/' . $plugin_file)) {
 
 
 
-add_action( 'admin_menu', 'blogai_plugin_menu');
 
+add_action( 'admin_menu', 'blogai_plugin_menu');
 register_uninstall_hook(__FILE__, 'on_delete_plugin');
 
