@@ -112,3 +112,4 @@ if (file_exists(WP_PLUGIN_DIR . '/' . $plugin_file)) {
 add_action( 'admin_menu', 'blogai_plugin_menu');
 
 register_uninstall_hook(__FILE__, 'on_delete_plugin');
+
