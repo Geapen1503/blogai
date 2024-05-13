@@ -91,7 +91,7 @@ function create_blogai_table() {
 
     $create_table_sql = "CREATE TABLE IF NOT EXISTS BlogAI (
         id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        frequency VARCHAR(20) NOT NULL,
+        frequency VARCHAR(3) NOT NULL CHECK (frequency REGEXP '^(1d|3d|1w|2w|1m|3m)$'),
         subject VARCHAR(250) NOT NULL,
         description VARCHAR(250),
         withImages BOOLEAN,
