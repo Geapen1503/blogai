@@ -58,6 +58,7 @@ function blogai_is_active() {
     $servername = 'localhost';
     $username = 'root';
     $password = '';
+    $dbname = 'blogai_db';
 
     $conn = new mysqli($servername, $username, $password);
 
@@ -65,16 +66,24 @@ function blogai_is_active() {
         die("Connection failed: " . $conn->connect_error);
     }
 
-    $dbname = 'blogai_db';
+    create_blogai_base($conn, $dbname);
+    create_blogai_table($conn, $dbname);
+
+
+    $conn->close();
+}
+
+function create_blogai_base($conn, $dbname) {
     $create_db_sql = "CREATE DATABASE IF NOT EXISTS $dbname";
     if ($conn->query($create_db_sql) === TRUE) {
         debug_to_console('Database created successfully');
     } else {
         debug_to_console('Error creating database: ' . $conn->error);
         $conn->close();
-        return;
     }
+}
 
+function create_blogai_table($conn, $dbname) {
     $conn->select_db($dbname);
 
     $create_table_sql = "CREATE TABLE IF NOT EXISTS BlogAI (
@@ -86,13 +95,10 @@ function blogai_is_active() {
         reg_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )";
 
+
     if ($conn->query($create_table_sql) === TRUE) debug_to_console('Table blogai created successfully');
-     else debug_to_console('Error creating table: ' . $conn->error);
-
-    $conn->close();
+    else debug_to_console('Error creating table: ' . $conn->error);
 }
-
-
 
 
 
