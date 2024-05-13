@@ -21,23 +21,10 @@ $dbname = 'blogai_db';
 $conn = new mysqli($servername, $username, $password);
 
 
-/* function administration_add_admin_page() {
-    add_submenu_page(
-        'options-general.php',
-        'Mes options',
-        'Blog AI',
-        'manage_options',
-        'administration',
-        'administration_page'
-    );
-}
-
-add_action('admin_menu', 'administration_add_admin_page'); */
 
 function debug_to_console($data) {
     $output = $data;
-    if (is_array($output))
-        $output = implode(',', $output);
+    if (is_array($output)) $output = implode(',', $output);
 
     echo "<script>console.log('Debug Objects: " . $output . "' );</script>";
 }
@@ -94,8 +81,7 @@ function create_blogai_table() {
         frequency VARCHAR(3) NOT NULL CHECK (frequency REGEXP '^(1d|3d|1w|2w|1m|3m)$'),
         subject VARCHAR(250) NOT NULL,
         description VARCHAR(250),
-        withImages BOOLEAN,
-        reg_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        withImages BOOLEAN
     )";
 
 
