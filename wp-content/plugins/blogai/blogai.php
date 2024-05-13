@@ -14,6 +14,12 @@ Author URI: http://localhost
 
 $plugin_file = '/blogai/blogai.php';
 
+$servername = 'localhost';
+$username = 'root';
+$password = '';
+$dbname = 'blogai_db';
+$conn = new mysqli($servername, $username, $password);
+
 
 /* function administration_add_admin_page() {
     add_submenu_page(
@@ -53,27 +59,22 @@ function blogai_settings() {
 }
 
 function blogai_is_active() {
+    global $conn;
     debug_to_console('Blog AI is installed');
-
-    $servername = 'localhost';
-    $username = 'root';
-    $password = '';
-    $dbname = 'blogai_db';
-
-    $conn = new mysqli($servername, $username, $password);
 
     if ($conn->connect_error) {
         die("Connection failed: " . $conn->connect_error);
     }
 
-    create_blogai_base($conn, $dbname);
-    create_blogai_table($conn, $dbname);
-
+    create_blogai_base();
+    create_blogai_table();
 
     $conn->close();
 }
 
-function create_blogai_base($conn, $dbname) {
+function create_blogai_base() {
+    global $dbname, $conn;
+
     $create_db_sql = "CREATE DATABASE IF NOT EXISTS $dbname";
     if ($conn->query($create_db_sql) === TRUE) {
         debug_to_console('Database created successfully');
@@ -83,7 +84,9 @@ function create_blogai_base($conn, $dbname) {
     }
 }
 
-function create_blogai_table($conn, $dbname) {
+function create_blogai_table() {
+    global $dbname, $conn;
+
     $conn->select_db($dbname);
 
     $create_table_sql = "CREATE TABLE IF NOT EXISTS BlogAI (
@@ -100,6 +103,18 @@ function create_blogai_table($conn, $dbname) {
     else debug_to_console('Error creating table: ' . $conn->error);
 }
 
+function on_delete_plugin() {
+    global $dbname, $conn;
+
+    $delete_base_sql = "DROP DATABASE IF EXISTS $dbname";
+
+    if ($conn->query($delete_base_sql) === TRUE) debug_to_console('Database deleted successfully');
+    else debug_to_console('Error deleting database: ' . $conn->error);
+
+
+    $conn->close();
+}
+
 
 
 if (file_exists(WP_PLUGIN_DIR . '/' . $plugin_file)) {
@@ -108,5 +123,6 @@ if (file_exists(WP_PLUGIN_DIR . '/' . $plugin_file)) {
 
 
 
-
 add_action( 'admin_menu', 'blogai_plugin_menu');
+
+register_uninstall_hook(__FILE__, 'on_delete_plugin');
