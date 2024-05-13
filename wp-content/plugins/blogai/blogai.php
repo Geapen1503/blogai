@@ -108,7 +108,7 @@ function on_delete_plugin() {
 
 
 
-function change_path() {
+function check_if_active() {
     if (is_plugin_active('blogai/blogai.php')) {
         blogai_is_active();
     }
@@ -117,7 +117,7 @@ function change_path() {
 
 
 
-add_action( 'admin_init', 'change_path');
+add_action( 'admin_init', 'check_if_active');
 add_action( 'admin_menu', 'blogai_plugin_menu');
 
 
