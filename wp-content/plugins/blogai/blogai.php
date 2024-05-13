@@ -103,7 +103,6 @@ function on_delete_plugin() {
 
 
 
-
 if (file_exists(WP_PLUGIN_DIR . '/' . $plugin_file)) {
     blogai_is_active();
 }
