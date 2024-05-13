@@ -39,24 +39,24 @@ function blogai_plugin_menu() {
 
 }
 
-function blogai_settings() {
+/*function blogai_settings() {
     $css = file_get_contents('../wp-content/plugins/blogai/css/style.css');
     echo '<style>' . $css . '</style>';
 
-}
+}*/
 
 function blogai_is_active() {
     global $conn;
     debug_to_console('Blog AI is installed');
 
-    if ($conn->connect_error) {
+    /*if ($conn->connect_error) {
         die("Connection failed: " . $conn->connect_error);
-    }
+    }*/
 
     create_blogai_base();
     create_blogai_table();
 
-    $conn->close();
+    //$conn->close();
 }
 
 function create_blogai_base() {
@@ -107,13 +107,19 @@ function on_delete_plugin() {
 
 
 
-if (file_exists(WP_PLUGIN_DIR . '/' . $plugin_file)) {
-    blogai_is_active();
+
+function change_path() {
+    if (is_plugin_active('blogai/blogai.php')) {
+        blogai_is_active();
+    }
+
 }
 
 
 
-
+add_action( 'admin_init', 'change_path');
 add_action( 'admin_menu', 'blogai_plugin_menu');
-register_uninstall_hook(__FILE__, 'on_delete_plugin');
 
+
+//register_deactivation_hook(__FILE__, 'on_delete_plugin');
+register_uninstall_hook(__FILE__, 'on_delete_plugin');
