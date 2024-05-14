@@ -106,20 +106,55 @@ function on_delete_plugin() {
 }
 
 
+// beginning of hook part
+
+function custom_cron_schedule() {
+    // do not forget to add a switch case that translate every frequency in the database to a proper schedule.
+
+    $schedules['every_day'] = array(
+        'interval' => 86400,
+        'display' => __("Every day")
+    );
+
+    return $schedules;
+}
+
+function cron_text_to_console() {
+    debug_to_console("Le cron vient d'être exécuter");
+}
+
+
+// ending of the hook part
+
+function on_active() {
+    if (!wp_next_scheduled('send_mail_hook')) {
+        wp_schedule_event(time(), '60-seconds', 'send_mail_hook');
+    }
+}
+
+function on_unactive() {
+    wp_clear_scheduled_hook("send_mail_hook");
+}
 
 
 function check_if_active() {
     if (is_plugin_active('blogai/blogai.php')) {
         blogai_is_active();
     }
-
 }
+
+
 
 
 
 add_action( 'admin_init', 'check_if_active');
 add_action( 'admin_menu', 'blogai_plugin_menu');
 
+
+register_activation_hook(__FILE__, 'on_active');
+register_deactivation_hook(__FILE__, 'on_unactive');
+add_filter('cron_schedules', 'custom_cron_schedule');
+add_action('send_mail_hook', 'cron_text_to_console');
 
 //register_deactivation_hook(__FILE__, 'on_delete_plugin');
 register_uninstall_hook(__FILE__, 'on_delete_plugin');
