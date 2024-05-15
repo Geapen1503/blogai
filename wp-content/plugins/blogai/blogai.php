@@ -42,6 +42,8 @@ function blogai_is_active() {
 
     create_blogai_base();
     create_blogai_table();
+
+    // $conn->close();
 }
 
 function create_blogai_base() {
@@ -89,13 +91,39 @@ function on_delete_plugin() {
 
 //
 
-function custom_cron_schedule($schedules) {
+function custom_cron_schedule() {
     $schedules['every_two_day'] = array(
         'interval' => 172800,
         'display' => __("Every two day")
     );
     return $schedules;
 }
+
+// Dunno if it works but useful for later
+/*function custom_cron_schedule() {
+    global $conn;
+
+    $sql_get_fre = "SELECT frequency FROM blogai";
+
+    $result = $conn->query($sql_get_fre);
+
+    switch ($sql_get_fre) {
+        case $sql_get_fre == '1d';
+            custom_cron_schedule_data('every_day', 86400);
+            break;
+        case $sql_get_fre == '3d';
+            custom_cron_schedule_data('every_three_days', 259200);
+            break;
+    }
+}
+
+function custom_cron_schedule_data($name, $interval) {
+    $schedules['$name'] = array(
+        'interval' => $interval,
+        'display' => __("$name")
+    );
+    return $schedules;
+}*/
 
 
 register_activation_hook(__FILE__, 'on_active');
@@ -111,7 +139,7 @@ function on_unactive() {
 }
 
 
-function cron_text_to_console_fun() {
+function generate_post() {
     $to = 'theogilat@gmail.com';
     $subject = 'Test Email';
     $message = 'This is a test email sent from WordPress using PHP.';
@@ -120,15 +148,9 @@ function cron_text_to_console_fun() {
 
     $result = wp_mail($to, $subject, $message, $additional_headers);
 
-    if ($result) {
-        debug_to_console('Email sent successfully');
-    } else {
-        debug_to_console('Email sent failed');
-    }
-
-    debug_to_console('It worked');
+    if ($result) debug_to_console('Email sent successfully');
+    else debug_to_console('Email sent failed');
 }
-
 
 
 function check_if_active() {
@@ -145,4 +167,4 @@ add_action('admin_menu', 'blogai_plugin_menu');
 register_uninstall_hook(__FILE__, 'on_delete_plugin');
 
 add_filter('cron_schedules', 'custom_cron_schedule');
-add_action('cron_text_to_console', 'cron_text_to_console_fun');
+add_action('cron_text_to_console', 'generate_post');
