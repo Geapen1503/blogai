@@ -108,7 +108,8 @@ function custom_cron_schedule() {
     return $schedules;
 }
 
-// Dunno if it works but useful for later
+// Need to make a working version of this
+
 /*function custom_cron_schedule() {
     global $conn;
 
