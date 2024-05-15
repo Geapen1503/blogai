@@ -167,6 +167,7 @@ echo '
 </html>
 ';
 
+
 global $frequency_input, $subject_input, $description_input;
 
 if (isset($_POST['submit'])) {

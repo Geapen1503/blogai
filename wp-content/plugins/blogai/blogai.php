@@ -97,6 +97,7 @@ function on_delete_plugin() {
     $conn->close();
 }
 
+
 //
 
 function custom_cron_schedule() {
