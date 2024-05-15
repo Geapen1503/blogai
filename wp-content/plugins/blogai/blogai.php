@@ -33,7 +33,8 @@ function blogai_plugin_menu() {
     $capability  = apply_filters( 'blogai_required_capabilities', 'manage_options' );
     $parent_slug = 'blogai_main_menu';
 
-    add_menu_page( esc_html__( 'Blog Ai', 'blog-ai' ), esc_html__( 'BLOG AI', 'blog-ai' ), $capability, $parent_slug, 'blogai_settings' );
+    add_menu_page( esc_html__( 'Blog Ai', 'blog-ai' ), esc_html__( 'BLOG AI', 'blog-ai' ), $capability, $parent_slug, 'create_ui' );
+
 }
 
 function blogai_is_active() {
@@ -77,6 +78,13 @@ function create_blogai_table() {
         debug_to_console('Error creating table: ' . $conn->error);
     }
 }
+
+function create_ui() {
+    include 'public/html/settings.php';
+
+    update_table_html_data();
+}
+
 
 function on_delete_plugin() {
     global $dbname, $conn;
@@ -150,6 +158,21 @@ function generate_post() {
 
     if ($result) debug_to_console('Email sent successfully');
     else debug_to_console('Email sent failed');
+}
+
+
+function update_table_html_data() {
+    global $frequency_input, $subject_input, $description_input, $conn;
+
+    $query = 'INSERT INTO blogai(frequency, subject, description) VALUES (?, ?, ?)';
+    $stmt = mysqli_prepare($conn, $query);
+    mysqli_stmt_bind_param($stmt, "sss", $frequency_input, $subject_input, $description_input);
+
+    if (mysqli_stmt_execute($stmt)) {
+        echo "";
+    } else {
+        echo "Error : " . mysqli_error($conn);
+    }
 }
 
 
