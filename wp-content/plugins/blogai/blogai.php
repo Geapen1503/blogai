@@ -3,6 +3,7 @@
  * @package Blog_AI
  * @version 1.0.0
  */
+
 /*
 Plugin Name: Blog AI
 Plugin URI: http://localhost
@@ -20,8 +21,6 @@ $password = '';
 $dbname = 'blogai_db';
 $conn = new mysqli($servername, $username, $password);
 
-
-
 function debug_to_console($data) {
     $output = $data;
     if (is_array($output)) $output = implode(',', $output);
@@ -29,34 +28,20 @@ function debug_to_console($data) {
     echo "<script>console.log('Debug Objects: " . $output . "' );</script>";
 }
 
-function blogai_plugin_menu() {
 
+function blogai_plugin_menu() {
     $capability  = apply_filters( 'blogai_required_capabilities', 'manage_options' );
     $parent_slug = 'blogai_main_menu';
 
-
     add_menu_page( esc_html__( 'Blog Ai', 'blog-ai' ), esc_html__( 'BLOG AI', 'blog-ai' ), $capability, $parent_slug, 'blogai_settings' );
-
 }
-
-/*function blogai_settings() {
-    $css = file_get_contents('../wp-content/plugins/blogai/css/style.css');
-    echo '<style>' . $css . '</style>';
-
-}*/
 
 function blogai_is_active() {
     global $conn;
     debug_to_console('Blog AI is installed');
 
-    /*if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }*/
-
     create_blogai_base();
     create_blogai_table();
-
-    //$conn->close();
 }
 
 function create_blogai_base() {
@@ -84,13 +69,11 @@ function create_blogai_table() {
         withImages BOOLEAN
     )";
 
-
     if ($conn->query($create_table_sql) === TRUE) {
         debug_to_console('Table blogai created successfully');
     } else {
         debug_to_console('Error creating table: ' . $conn->error);
     }
-
 }
 
 function on_delete_plugin() {
@@ -101,40 +84,51 @@ function on_delete_plugin() {
     if ($conn->query($delete_base_sql) === TRUE) debug_to_console('Database deleted successfully');
     else debug_to_console('Error deleting database: ' . $conn->error);
 
-
     $conn->close();
 }
 
+//
 
-// beginning of hook part
-
-function custom_cron_schedule() {
-    // do not forget to add a switch case that translate every frequency in the database to a proper schedule.
-
-    $schedules['every_day'] = array(
-        'interval' => 86400,
-        'display' => __("Every day")
+function custom_cron_schedule($schedules) {
+    $schedules['every_two_day'] = array(
+        'interval' => 172800,
+        'display' => __("Every two day")
     );
-
     return $schedules;
 }
 
-function cron_text_to_console() {
-    debug_to_console("Le cron vient d'être exécuter");
-}
 
-
-// ending of the hook part
-
+register_activation_hook(__FILE__, 'on_active');
 function on_active() {
-    if (!wp_next_scheduled('send_mail_hook')) {
-        wp_schedule_event(time(), '60-seconds', 'send_mail_hook');
+    if (!wp_next_scheduled('cron_text_to_console')) {
+        wp_schedule_event(time(), 'every_two_day', 'cron_text_to_console');
     }
 }
 
+register_deactivation_hook(__FILE__, 'on_unactive');
 function on_unactive() {
-    wp_clear_scheduled_hook("send_mail_hook");
+    wp_clear_scheduled_hook("cron_text_to_console");
 }
+
+
+function cron_text_to_console_fun() {
+    $to = 'theogilat@gmail.com';
+    $subject = 'Test Email';
+    $message = 'This is a test email sent from WordPress using PHP.';
+    $headers[] = 'Content-Type: text/html; charset=UTF-8';
+    $additional_headers = implode("\r\n", $headers);
+
+    $result = wp_mail($to, $subject, $message, $additional_headers);
+
+    if ($result) {
+        debug_to_console('Email sent successfully');
+    } else {
+        debug_to_console('Email sent failed');
+    }
+
+    debug_to_console('It worked');
+}
+
 
 
 function check_if_active() {
@@ -146,15 +140,9 @@ function check_if_active() {
 
 
 
-
-add_action( 'admin_init', 'check_if_active');
-add_action( 'admin_menu', 'blogai_plugin_menu');
-
-
-register_activation_hook(__FILE__, 'on_active');
-register_deactivation_hook(__FILE__, 'on_unactive');
-add_filter('cron_schedules', 'custom_cron_schedule');
-add_action('send_mail_hook', 'cron_text_to_console');
-
-//register_deactivation_hook(__FILE__, 'on_delete_plugin');
+add_action('admin_init', 'check_if_active');
+add_action('admin_menu', 'blogai_plugin_menu');
 register_uninstall_hook(__FILE__, 'on_delete_plugin');
+
+add_filter('cron_schedules', 'custom_cron_schedule');
+add_action('cron_text_to_console', 'cron_text_to_console_fun');
