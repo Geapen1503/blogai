@@ -25,7 +25,7 @@ echo '
     <div id="MainBox">
         <form method="post">
             <div class="inputBoxes">
-                <label>The interval:</label>
+                <label><span class="labelSpan">* </span>The interval:</label>
                 <select name="frequency" required>
                     <option value="" selected disabled hidden>Choose a frequency</option>
                     <option value="1d">1d (1 day)</option>
@@ -37,11 +37,11 @@ echo '
                 </select>
             </div>
             <div class="inputBoxes">
-                <label>The subject:</label>
+                <label><span class="labelSpan">* </span>The subject:</label>
                 <textarea name="subject" placeholder="Subject of the post..." required></textarea>
             </div>
             <div class="inputBoxes">
-                <label>The description:</label>
+                <label><span class="labelSpan">* </span>The description:</label>
                 <textarea name="description" placeholder="Description of the post..." required></textarea>
             </div>
             <div class="inputBoxes submitBox">
@@ -160,6 +160,11 @@ echo '
         
         .submitButton:hover{
             background-color: #45a049;
+        }
+        
+        .labelSpan {
+            color: red;
+            text-decoration: none;
         }
     </style>
 

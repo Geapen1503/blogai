@@ -100,40 +100,55 @@ function on_delete_plugin() {
 
 //
 
-function custom_cron_schedule() {
+/*function custom_cron_schedule() {
     $schedules['every_two_day'] = array(
         'interval' => 172800,
         'display' => __("Every two day")
     );
     return $schedules;
-}
+}*/
 
-// Need to make a working version of this
-
-/*function custom_cron_schedule() {
+function custom_cron_schedule() {
     global $conn;
 
-    $sql_get_fre = "SELECT frequency FROM blogai";
+    $query = 'SELECT frequency FROM blogai LIMIT 1';
+    $result = mysqli_query($conn, $query);
 
-    $result = $conn->query($sql_get_fre);
+    if ($result && mysqli_num_rows($result) > 0) {
+        $row = mysqli_fetch_assoc($result);
+        $frequency_value = $row['frequency'];
 
-    switch ($sql_get_fre) {
-        case $sql_get_fre == '1d';
-            custom_cron_schedule_data('every_day', 86400);
-            break;
-        case $sql_get_fre == '3d';
-            custom_cron_schedule_data('every_three_days', 259200);
-            break;
+        switch ($frequency_value) {
+            case '1d':
+                return get_cron_data('every_day', 86400);
+            case '3d':
+                return get_cron_data('every_three_day', 172800);
+            case '1w':
+                return get_cron_data('every_week', 604800);
+            case '2w':
+                return get_cron_data('every_two_week', 1209600);
+            case '1m':
+                return get_cron_data('every_month', 2419200);
+            case '3m':
+                return get_cron_data('every_three_month', 7257600);
+            default:
+                return get_cron_data('every_day', 86400);
+        }
     }
+
+    return array();
 }
 
-function custom_cron_schedule_data($name, $interval) {
-    $schedules['$name'] = array(
+function get_cron_data($name, $interval) {
+    $schedules[$name] = array(
         'interval' => $interval,
-        'display' => __("$name")
+        'display' => __('Every')
     );
     return $schedules;
-}*/
+}
+
+
+
 
 
 register_activation_hook(__FILE__, 'on_active');
@@ -166,9 +181,19 @@ function generate_post() {
 function update_table_html_data() {
     global $frequency_input, $subject_input, $description_input, $conn;
 
-    $query = 'INSERT INTO blogai(frequency, subject, description) VALUES (?, ?, ?)';
-    $stmt = mysqli_prepare($conn, $query);
-    mysqli_stmt_bind_param($stmt, "sss", $frequency_input, $subject_input, $description_input);
+    $check_query = 'SELECT COUNT(*) AS count FROM blogai';
+    $check_result = mysqli_query($conn, $check_query);
+    $row = mysqli_fetch_assoc($check_result);
+    $row_count = $row['count'];
+
+    if ($row_count > 0) {
+        $update_query = 'UPDATE blogai SET frequency = ?, subject = ?, description = ? LIMIT 1';
+        $stmt = mysqli_prepare($conn, $update_query);
+        mysqli_stmt_bind_param($stmt, "sss", $frequency_input, $subject_input, $description_input);
+    } else {
+        $stmt = mysqli_prepare($conn, 'INSERT INTO blogai(frequency, subject, description) VALUES (?, ?, ?)');
+        mysqli_stmt_bind_param($stmt, "sss", $frequency_input, $subject_input, $description_input);
+    }
 
     if (mysqli_stmt_execute($stmt)) {
         echo "";
@@ -176,6 +201,7 @@ function update_table_html_data() {
         echo "Error : " . mysqli_error($conn);
     }
 }
+
 
 
 function check_if_active() {
