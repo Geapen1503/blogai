@@ -148,14 +148,50 @@ function get_cron_data($name, $interval) {
 
 register_activation_hook(__FILE__, 'on_active');
 function on_active() {
-    if (!wp_next_scheduled('cron_text_to_console')) {
-        wp_schedule_event(time(), 'every_two_day', 'cron_text_to_console');
+    global $wpdb;
+
+    $schedules = custom_cron_schedule();
+
+    $table_name = $wpdb->prefix . 'blogai';
+    $query = "SELECT COUNT(*) AS count FROM $table_name";
+    $row_count = $wpdb->get_var($query);
+
+    if ($row_count > 0 && !empty($schedules)) {
+        $first_schedule = key($schedules);
+
+        if (!wp_next_scheduled('cron_text_to_console')) {
+            wp_schedule_event(time(), $first_schedule, 'cron_text_to_console');
+        }
     }
 }
+
 
 register_deactivation_hook(__FILE__, 'on_unactive');
 function on_unactive() {
     wp_clear_scheduled_hook("cron_text_to_console");
+}
+
+function update_schedule_event() {
+    //wp_clear_scheduled_hook("cron_text_to_console");
+    global $wpdb;
+
+    $schedules = custom_cron_schedule();
+
+    $table_name = $wpdb->prefix . 'blogai';
+    $query = "SELECT COUNT(*) AS count FROM $table_name";
+    $row_count = $wpdb->get_var($query);
+
+    if ($row_count > 0 && !empty($schedules)) {
+        $first_schedule = key($schedules);
+        $recurrence = wp_get_schedule('cron_text_to_console');
+
+        if ($first_schedule != $recurrence) {
+            wp_clear_scheduled_hook("cron_text_to_console");
+            if (!wp_next_scheduled('cron_text_to_console')) {
+                wp_schedule_event(time(), $first_schedule, 'cron_text_to_console');
+            }
+        }
+    }
 }
 
 
@@ -208,5 +244,6 @@ add_action('admin_init', 'check_if_active');
 add_action('admin_menu', 'blogai_plugin_menu');
 register_uninstall_hook(__FILE__, 'on_delete_plugin');
 
+add_action('init', 'update_schedule_event');
 add_filter('cron_schedules', 'custom_cron_schedule');
 add_action('cron_text_to_console', 'generate_post');
