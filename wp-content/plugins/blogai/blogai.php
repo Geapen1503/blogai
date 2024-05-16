@@ -21,6 +21,9 @@ $password = '';
 $dbname = 'blogai_db';
 $conn = new mysqli($servername, $username, $password);
 
+global $wpdb;
+
+
 function debug_to_console($data) {
     $output = $data;
     if (is_array($output)) $output = implode(',', $output);
@@ -38,33 +41,18 @@ function blogai_plugin_menu() {
 }
 
 function blogai_is_active() {
-    global $conn;
+    global $wpdb;
     debug_to_console('Blog AI is installed');
 
-    create_blogai_base();
     create_blogai_table();
-
-    // $conn->close();
-}
-
-function create_blogai_base() {
-    global $dbname, $conn;
-
-    $create_db_sql = "CREATE DATABASE IF NOT EXISTS $dbname";
-    if ($conn->query($create_db_sql) === TRUE) {
-        debug_to_console('Database created successfully');
-    } else {
-        debug_to_console('Error creating database: ' . $conn->error);
-        $conn->close();
-    }
 }
 
 function create_blogai_table() {
-    global $dbname, $conn;
+    global $wpdb;
 
-    $conn->select_db($dbname);
+    $table_name = $wpdb->prefix . 'blogai';
 
-    $create_table_sql = "CREATE TABLE IF NOT EXISTS BlogAI (
+    $create_table_sql = "CREATE TABLE IF NOT EXISTS $table_name (
         id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         frequency VARCHAR(3) NOT NULL CHECK (frequency REGEXP '^(1d|3d|1w|2w|1m|3m)$'),
         subject VARCHAR(250) NOT NULL,
@@ -72,11 +60,10 @@ function create_blogai_table() {
         withImages BOOLEAN
     )";
 
-    if ($conn->query($create_table_sql) === TRUE) {
-        debug_to_console('Table blogai created successfully');
-    } else {
-        debug_to_console('Error creating table: ' . $conn->error);
-    }
+    require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+    dbDelta( $create_table_sql );
+
+    debug_to_console('Table blogai created successfully');
 }
 
 function create_ui() {
@@ -87,14 +74,15 @@ function create_ui() {
 
 
 function on_delete_plugin() {
-    global $dbname, $conn;
+    global $wpdb;
 
-    $delete_base_sql = "DROP DATABASE IF EXISTS $dbname";
+    $table_name = $wpdb->prefix . 'blogai';
 
-    if ($conn->query($delete_base_sql) === TRUE) debug_to_console('Database deleted successfully');
-    else debug_to_console('Error deleting database: ' . $conn->error);
+    $delete_table_sql = "DROP TABLE IF EXISTS $table_name";
 
-    $conn->close();
+    $wpdb->query($delete_table_sql);
+
+    debug_to_console('Table blogai deleted successfully');
 }
 
 
@@ -108,17 +96,20 @@ function on_delete_plugin() {
     return $schedules;
 }*/
 
-function custom_cron_schedule() {
-    global $conn;
 
-    $query = 'SELECT frequency FROM blogai';
-    $result = mysqli_query($conn, $query);
+function custom_cron_schedule() {
+    global $wpdb;
+
+    $table_name = $wpdb->prefix . 'blogai';
+
+    $query = "SELECT frequency FROM $table_name";
+    $results = $wpdb->get_results($query);
 
     $schedules = array();
 
-    if ($result && mysqli_num_rows($result) > 0) {
-        while ($row = mysqli_fetch_assoc($result)) {
-            $frequency_value = $row['frequency'];
+    if ($results) {
+        foreach ($results as $row) {
+            $frequency_value = $row->frequency;
 
             switch ($frequency_value) {
                 case '1d':
@@ -146,14 +137,13 @@ function custom_cron_schedule() {
     return $schedules;
 }
 
-
-
 function get_cron_data($name, $interval) {
     return array(
         'interval' => $interval,
         'display' => __($name)
     );
 }
+
 
 
 register_activation_hook(__FILE__, 'on_active');
@@ -184,16 +174,22 @@ function generate_post() {
 
 
 function update_table_html_data() {
-    global $frequency_input, $subject_input, $description_input, $conn;
+    global $frequency_input, $subject_input, $description_input, $wpdb;
 
-    $query = 'INSERT INTO blogai(frequency, subject, description) VALUES (?, ?, ?)';
-    $stmt = mysqli_prepare($conn, $query);
-    mysqli_stmt_bind_param($stmt, "sss", $frequency_input, $subject_input, $description_input);
+    $table_name = $wpdb->prefix . 'blogai';
 
-    if (mysqli_stmt_execute($stmt)) {
-        echo "";
+    $check_query = "SELECT COUNT(*) AS count FROM $table_name";
+    $row_count = $wpdb->get_var($check_query);
+
+    if ($row_count > 0) {
+        $update_query = "UPDATE $table_name SET frequency = %s, subject = %s, description = %s LIMIT 1";
+        $wpdb->query($wpdb->prepare($update_query, $frequency_input, $subject_input, $description_input));
     } else {
-        echo "Error : " . mysqli_error($conn);
+        $wpdb->insert($table_name, array(
+            'frequency' => $frequency_input,
+            'subject' => $subject_input,
+            'description' => $description_input
+        ));
     }
 }
 
