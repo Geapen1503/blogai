@@ -13,6 +13,8 @@ Version: 1.0.0
 Author URI: http://localhost
 */
 
+
+
 $plugin_file = 'blogai/blogai.php';
 
 $servername = 'localhost';
@@ -32,6 +34,12 @@ function debug_to_console($data) {
 }
 
 
+
+//////// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ////////
+
+
+
+
 function blogai_plugin_menu() {
     $capability  = apply_filters( 'blogai_required_capabilities', 'manage_options' );
     $parent_slug = 'blogai_main_menu';
@@ -39,6 +47,16 @@ function blogai_plugin_menu() {
     add_menu_page( esc_html__( 'Blog Ai', 'blog-ai' ), esc_html__( 'BLOG AI', 'blog-ai' ), $capability, $parent_slug, 'create_ui');
 
 }
+
+function create_ui() {
+    include 'public/html/settings.php';
+
+    update_table_html_data();
+}
+
+
+
+// // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% // //
 
 function blogai_is_active() {
     global $wpdb;
@@ -66,13 +84,6 @@ function create_blogai_table() {
     debug_to_console('Table blogai created successfully');
 }
 
-function create_ui() {
-    include 'public/html/settings.php';
-
-    update_table_html_data();
-}
-
-
 function on_delete_plugin() {
     global $wpdb;
 
@@ -85,17 +96,33 @@ function on_delete_plugin() {
     debug_to_console('Table blogai deleted successfully');
 }
 
+function update_table_html_data() {
+    global $frequency_input, $subject_input, $description_input, $wpdb;
 
-//
+    $table_name = $wpdb->prefix . 'blogai';
 
-/*function custom_cron_schedule() {
-    $schedules['every_two_day'] = array(
-        'interval' => 172800,
-        'display' => __("Every two day")
-    );
-    return $schedules;
-}*/
+    $check_query = "SELECT COUNT(*) AS count FROM $table_name";
+    $row_count = $wpdb->get_var($check_query);
 
+    if ($row_count > 0) {
+        $update_query = "UPDATE $table_name SET frequency = %s, subject = %s, description = %s LIMIT 1";
+        $wpdb->query($wpdb->prepare($update_query, $frequency_input, $subject_input, $description_input));
+    } else {
+        $wpdb->insert($table_name, array(
+            'frequency' => $frequency_input,
+            'subject' => $subject_input,
+            'description' => $description_input
+        ));
+    }
+}
+
+
+
+// // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% // //
+
+
+
+// [-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-] //
 
 function custom_cron_schedule() {
     global $wpdb;
@@ -195,6 +222,13 @@ function update_schedule_event() {
 }
 
 
+// [-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-] //
+
+
+
+//
+////
+//////
 function generate_post() {
     $to = 'theogilat@gmail.com';
     $subject = 'Test Email';
@@ -207,29 +241,15 @@ function generate_post() {
     if ($result) debug_to_console('Email sent successfully');
     else debug_to_console('Email sent failed');
 }
+//////
+////
+//
 
 
-function update_table_html_data() {
-    global $frequency_input, $subject_input, $description_input, $wpdb;
-
-    $table_name = $wpdb->prefix . 'blogai';
-
-    $check_query = "SELECT COUNT(*) AS count FROM $table_name";
-    $row_count = $wpdb->get_var($check_query);
-
-    if ($row_count > 0) {
-        $update_query = "UPDATE $table_name SET frequency = %s, subject = %s, description = %s LIMIT 1";
-        $wpdb->query($wpdb->prepare($update_query, $frequency_input, $subject_input, $description_input));
-    } else {
-        $wpdb->insert($table_name, array(
-            'frequency' => $frequency_input,
-            'subject' => $subject_input,
-            'description' => $description_input
-        ));
-    }
-}
 
 
+
+// // // ------------------- // // //
 
 function check_if_active() {
     if (is_plugin_active('blogai/blogai.php')) {
@@ -240,6 +260,9 @@ function check_if_active() {
 
 
 
+
+// <><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><> //
+
 add_action('admin_init', 'check_if_active');
 add_action('admin_menu', 'blogai_plugin_menu');
 register_uninstall_hook(__FILE__, 'on_delete_plugin');
@@ -247,3 +270,5 @@ register_uninstall_hook(__FILE__, 'on_delete_plugin');
 add_action('init', 'update_schedule_event');
 add_filter('cron_schedules', 'custom_cron_schedule');
 add_action('cron_text_to_console', 'generate_post');
+
+// <><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><> //
