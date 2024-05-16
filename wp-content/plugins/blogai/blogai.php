@@ -62,6 +62,8 @@ function blogai_is_active() {
     global $wpdb;
     debug_to_console('Blog AI is installed');
 
+    get_api_data();
+
     create_blogai_table();
 }
 
@@ -223,6 +225,37 @@ function update_schedule_event() {
 
 
 // [-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-]~[-] //
+
+
+// ///// // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ // ///// //
+
+function make_api_link() {
+    $api_url = 'https://api.sampleapis.com/switch/games/1';
+    $response = wp_remote_get($api_url);
+
+    if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
+        $body = wp_remote_retrieve_body($response);
+        $data = json_decode($body, true);
+
+        return $data;
+    } else {
+
+        return is_wp_error( $response ) ? $response->get_error_code() : wp_remote_retrieve_response_code( $response );
+    }
+}
+
+function get_api_data() {
+    $result = make_api_link();
+
+    if (is_array($result)) {
+        debug_to_console($result['name'] . '\n' . $result['developers'][0]);
+    } else {
+        debug_to_console('ERROR CANNOT ESTABLISH LINK WITH API');
+    }
+}
+
+// ///// // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ // ///// //
+
 
 
 
