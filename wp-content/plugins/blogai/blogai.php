@@ -33,7 +33,7 @@ function blogai_plugin_menu() {
     $capability  = apply_filters( 'blogai_required_capabilities', 'manage_options' );
     $parent_slug = 'blogai_main_menu';
 
-    add_menu_page( esc_html__( 'Blog Ai', 'blog-ai' ), esc_html__( 'BLOG AI', 'blog-ai' ), $capability, $parent_slug, 'create_ui' );
+    add_menu_page( esc_html__( 'Blog Ai', 'blog-ai' ), esc_html__( 'BLOG AI', 'blog-ai' ), $capability, $parent_slug, 'create_ui');
 
 }
 
@@ -111,44 +111,48 @@ function on_delete_plugin() {
 function custom_cron_schedule() {
     global $conn;
 
-    $query = 'SELECT frequency FROM blogai LIMIT 1';
+    $query = 'SELECT frequency FROM blogai';
     $result = mysqli_query($conn, $query);
 
-    if ($result && mysqli_num_rows($result) > 0) {
-        $row = mysqli_fetch_assoc($result);
-        $frequency_value = $row['frequency'];
+    $schedules = array();
 
-        switch ($frequency_value) {
-            case '1d':
-                return get_cron_data('every_day', 86400);
-            case '3d':
-                return get_cron_data('every_three_day', 172800);
-            case '1w':
-                return get_cron_data('every_week', 604800);
-            case '2w':
-                return get_cron_data('every_two_week', 1209600);
-            case '1m':
-                return get_cron_data('every_month', 2419200);
-            case '3m':
-                return get_cron_data('every_three_month', 7257600);
-            default:
-                return get_cron_data('every_day', 86400);
+    if ($result && mysqli_num_rows($result) > 0) {
+        while ($row = mysqli_fetch_assoc($result)) {
+            $frequency_value = $row['frequency'];
+
+            switch ($frequency_value) {
+                case '1d':
+                    $schedules['every_day'] = get_cron_data('every_day', 86400);
+                    break;
+                case '3d':
+                    $schedules['every_three_day'] = get_cron_data('every_three_day', 172800);
+                    break;
+                case '1w':
+                    $schedules['every_week'] = get_cron_data('every_week', 604800);
+                    break;
+                case '2w':
+                    $schedules['every_two_week'] = get_cron_data('every_two_week', 1209600);
+                    break;
+                case '1m':
+                    $schedules['every_month'] = get_cron_data('every_month', 2419200);
+                    break;
+                case '3m':
+                    $schedules['every_three_month'] = get_cron_data('every_three_month', 7257600);
+                    break;
+            }
         }
     }
 
-    return array();
-}
-
-function get_cron_data($name, $interval) {
-    $schedules[$name] = array(
-        'interval' => $interval,
-        'display' => __('Every')
-    );
     return $schedules;
 }
 
 
-
+function get_cron_data($name, $interval) {
+    return array(
+        'interval' => $interval,
+        'display' => __($name)
+    );
+}
 
 
 register_activation_hook(__FILE__, 'on_active');
@@ -181,19 +185,9 @@ function generate_post() {
 function update_table_html_data() {
     global $frequency_input, $subject_input, $description_input, $conn;
 
-    $check_query = 'SELECT COUNT(*) AS count FROM blogai';
-    $check_result = mysqli_query($conn, $check_query);
-    $row = mysqli_fetch_assoc($check_result);
-    $row_count = $row['count'];
-
-    if ($row_count > 0) {
-        $update_query = 'UPDATE blogai SET frequency = ?, subject = ?, description = ? LIMIT 1';
-        $stmt = mysqli_prepare($conn, $update_query);
-        mysqli_stmt_bind_param($stmt, "sss", $frequency_input, $subject_input, $description_input);
-    } else {
-        $stmt = mysqli_prepare($conn, 'INSERT INTO blogai(frequency, subject, description) VALUES (?, ?, ?)');
-        mysqli_stmt_bind_param($stmt, "sss", $frequency_input, $subject_input, $description_input);
-    }
+    $query = 'INSERT INTO blogai(frequency, subject, description) VALUES (?, ?, ?)';
+    $stmt = mysqli_prepare($conn, $query);
+    mysqli_stmt_bind_param($stmt, "sss", $frequency_input, $subject_input, $description_input);
 
     if (mysqli_stmt_execute($stmt)) {
         echo "";
