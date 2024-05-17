@@ -268,6 +268,9 @@ function get_api_data() {
 }
 
 function add_data_to_wp_posts() {
+    global $sketch_input;
+
+    $status_for_post = $sketch_input ? 'publish' : 'draft';
     $json_data = make_api_link();
     $data = json_decode($json_data, true);
 
@@ -278,7 +281,7 @@ function add_data_to_wp_posts() {
         $new_post = array(
             'post_title'    => $post_title,
             'post_content'  => $post_content,
-            'post_status'   => 'publish',
+            'post_status'   => $status_for_post,
             'post_author'   => get_current_user_id(),
             'post_date'     => current_time('mysql'),
             'post_type'     => 'post'
