@@ -44,6 +44,10 @@ echo '
                 <label><span class="labelSpan">* </span>The description:</label>
                 <textarea name="description" placeholder="Description of the post..." required></textarea>
             </div>
+            <div class="inputBoxes">
+                <label>Set post state to publish:</label>
+                <input name="sketch_input" type="checkbox" checked>
+            </div>
             <div class="inputBoxes submitBox">
                 <input type="submit" class="submitButton" name="submit" value="Save Config">
             </div>
@@ -140,10 +144,16 @@ echo '
             color: black;
             font-size: 1.3vw;
         }
+
+        input[name="sketch_input"] {
+            display: flex;
+            margin-right: 25%;
+        }
         
         .submitBox{
             display: flex;
             justify-content: center;
+            margin-top: 2vw;
         }
         
         .submitButton{
@@ -173,12 +183,15 @@ echo '
 ';
 
 
-global $frequency_input, $subject_input, $description_input;
+global $frequency_input, $subject_input, $description_input, $sketch_input;
 
 if (isset($_POST['submit'])) {
     $frequency_input = $_POST['frequency'];
     $subject_input = $_POST['subject'];
     $description_input = $_POST['description'];
+    $sketch_input = isset($_POST['sketch_input']) ? true : false;
+
+//    update_table_html_data();
 }
 
 
