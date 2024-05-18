@@ -15,6 +15,7 @@ Author URI: http://localhost
 
 
 
+
 $plugin_file = 'blogai/blogai.php';
 
 $servername = 'localhost';
