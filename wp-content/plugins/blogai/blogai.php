@@ -268,9 +268,13 @@ function get_api_data() {
 }
 
 function add_data_to_wp_posts() {
-    global $sketch_input;
+    global $wpdb;
 
-    $status_for_post = $sketch_input ? 'publish' : 'draft';
+    $table_name = $wpdb->prefix . 'blogai';
+    $query = "SELECT sketch_input FROM $table_name";
+    $row_count = $wpdb->get_var($query);
+
+    $status_for_post = $row_count ? 'publish' : 'draft';
     $json_data = make_api_link();
     $data = json_decode($json_data, true);
 
