@@ -15,6 +15,7 @@ Author URI: http://localhost
 
 
 
+
 $plugin_file = 'blogai/blogai.php';
 
 $servername = 'localhost';
@@ -241,7 +242,7 @@ function make_api_link() {
         $body = wp_remote_retrieve_body($response);
         $data = json_decode($body, true);
 
-        // return $data;
+        ////return $data;
 
         $json = '{
         "title": "Quels sont tous les types de sites internet et quels sont les avantages et inconvénients de chacun",
