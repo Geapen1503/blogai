@@ -44,10 +44,20 @@ echo '
                 <label><span class="labelSpan">* </span>The description:</label>
                 <textarea name="description" placeholder="Description of the post..." required></textarea>
             </div>
-            <div class="inputBoxes">
+            <div class="inputBoxes checkBoxes firstCheckBox">
                 <label>Set post state to publish:</label>
-                <input name="sketch_input" type="checkbox" checked>
+                <input name="sketch_input" type="checkbox" class="checkButton" checked>
             </div>
+            <div class="inputBoxes checkBoxes">
+                <label>Make a post with images:</label>
+                <input type="checkbox" class="checkButton" name="withImage">
+            </div>
+            <div class="inputBoxes checkBoxes">
+            <label>Generate the post now:</label>
+                <input type="checkbox" class="checkButton" name="generateNow">
+            </div>
+
+            
             <div class="inputBoxes submitBox">
                 <input type="submit" class="submitButton" name="submit" value="Save Config">
             </div>
@@ -110,7 +120,7 @@ echo '
         
         #MainBox{
             display: flex;
-            height: 35vw;
+            height: 45vw;
             width: 45vw;
             margin-left: 2vw;
             flex-direction: column;
@@ -138,6 +148,20 @@ echo '
             background-color: transparent;
         }
         
+        .checkBoxes{
+            display: flex;
+            width: 40vw;
+            height: 3vw;
+            justify-content: space-between;
+            align-items: center;
+            
+            background-color: transparent;
+        }
+        
+        .firstCheckBox{
+            margin-top: 2vw;
+        }
+        
         label{
             text-decoration: underline;
             font-weight: 600;
@@ -146,6 +170,16 @@ echo '
         }
 
         input[name="sketch_input"] {
+            display: flex;
+            margin-right: 25%;
+        }
+        
+        input[name="withImage"] {
+            display: flex;
+            margin-right: 25%;
+        }
+        
+        input[name="generateNow"] {
             display: flex;
             margin-right: 25%;
         }
@@ -183,13 +217,16 @@ echo '
 ';
 
 
-global $frequency_input, $subject_input, $description_input, $sketch_input;
+global $frequency_input, $subject_input, $description_input, $sketch_input, $w_img_input, $gen_now_input;
 
 if (isset($_POST['submit'])) {
     $frequency_input = $_POST['frequency'];
     $subject_input = $_POST['subject'];
     $description_input = $_POST['description'];
-    $sketch_input = isset($_POST['sketch_input']) ? true : false;
+    $sketch_input = isset($_POST['sketch_input']) ? true : false; // make a function that make one terner instead of copying the same terner over and over again
+    $w_img_input = isset($_POST['withImage']) ? true : false;
+    $gen_now_input = isset($_POST['generateNow']) ? true : false;
+
 
 //    update_table_html_data();
 }

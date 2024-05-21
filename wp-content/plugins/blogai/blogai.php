@@ -78,15 +78,23 @@ function create_blogai_table() {
         frequency VARCHAR(3) NOT NULL CHECK (frequency REGEXP '^(1d|3d|1w|2w|1m|3m)$'),
         subject VARCHAR(250) NOT NULL,
         description VARCHAR(250),
-        withImages BOOLEAN,
-        sketch_input BOOLEAN DEFAULT TRUE
+        withImages BOOLEAN DEFAULT FALSE,
+        sketch_input BOOLEAN DEFAULT TRUE,
+        generate_now BOOLEAN DEFAULT FALSE
     )";
 
-    require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
-    dbDelta( $create_table_sql );
+    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+    $result = dbDelta($create_table_sql);
 
-    debug_to_console('Table blogai created successfully');
+    if (is_array($result) && !empty($result)) {
+        debug_to_console('Table blogai created successfully');
+    } else {
+        debug_to_console('Failed to create table blogai: ' . print_r($result, true));
+    }
 }
+
+
+
 function on_delete_plugin() {
     global $wpdb;
 
@@ -101,7 +109,7 @@ function on_delete_plugin() {
 
 
 function update_table_html_data() {
-    global $frequency_input, $subject_input, $description_input, $sketch_input, $wpdb;
+    global $frequency_input, $subject_input, $description_input, $sketch_input, $w_img_input, $gen_now_input, $wpdb;
 
     $table_name = $wpdb->prefix . 'blogai';
 
@@ -109,14 +117,16 @@ function update_table_html_data() {
     $row_count = $wpdb->get_var($check_query);
 
     if ($row_count > 0) {
-        $update_query = "UPDATE $table_name SET frequency = %s, subject = %s, description = %s, sketch_input = %d LIMIT 1";
-        $wpdb->query($wpdb->prepare($update_query, $frequency_input, $subject_input, $description_input, $sketch_input));
+        $update_query = "UPDATE $table_name SET frequency = %s, subject = %s, description = %s, withImages = %d, sketch_input = %d, generate_now = %d LIMIT 1";
+        $wpdb->query($wpdb->prepare($update_query, $frequency_input, $subject_input, $description_input, $w_img_input, $sketch_input, $gen_now_input));
     } else {
         $wpdb->insert($table_name, array(
             'frequency' => $frequency_input,
             'subject' => $subject_input,
             'description' => $description_input,
-            'sketch_input' => $sketch_input
+            'withImages' => $w_img_input,
+            'sketch_input' => $sketch_input,
+            'generate_now' => $gen_now_input
         ));
     }
 
@@ -183,6 +193,8 @@ function get_cron_data($name, $interval) {
 register_activation_hook(__FILE__, 'on_active');
 function on_active() {
     global $wpdb;
+
+    create_blogai_table();
 
     $schedules = custom_cron_schedule();
 
