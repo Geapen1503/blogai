@@ -20,11 +20,12 @@ $plugin_file = 'blogai/blogai.php';
 
 $servername = 'localhost';
 $username = 'root';
-$password = '';
+$password = 'root';
 $dbname = 'blogai_db';
 $conn = new mysqli($servername, $username, $password);
+$api_url = 'localhost:3000/';
 
-global $wpdb;
+global $wpdb, $user_id;
 
 
 function debug_to_console($data) {
@@ -32,6 +33,8 @@ function debug_to_console($data) {
     if (is_array($output)) $output = implode(',', $output);
 
     echo "<script>console.log('Debug Objects: " . $output . "' );</script>";
+
+    //error_log('Debug Objects: ' . $output);
 }
 
 
@@ -246,39 +249,91 @@ function update_schedule_event() {
 
 // ///// // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ // ///// //
 
-function make_api_link() {
-    $api_url = 'https://api.sampleapis.com/switch/games/1';
-    $response = wp_remote_get($api_url);
 
-    if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
-        $body = wp_remote_retrieve_body($response);
-        $data = json_decode($body, true);
 
-        ////return $data;
+function register_api($register_username, $register_password) {
+    global $api_url;
+    $register_api_url = $api_url . 'auth/register';
 
-        $json = '{
-        "title": "Quels sont tous les types de sites internet et quels sont les avantages et inconvénients de chacun",
-        "content": "<h1>Quels sont tous les types de sites internet et quels sont les avantages et inconvénients de chacun</h1> <h2>Introduction</h2> <p>Avec la prolifération des technologies numériques, les sites internet sont devenus des outils indispensables pour les entreprises et les particuliers. Il existe différents types de sites web, chacun ayant ses propres avantages et inconvénients. Cet article explore ces différents types de sites pour vous aider à choisir celui qui correspond le mieux à vos besoins.</p> <h2>Types de sites internet</h2> <h3>Sites vitrines</h3> <p>Les sites vitrines sont des sites statiques conçus principalement pour présenter une entreprise, ses produits ou ses services. Ils servent de carte de visite en ligne.</p> <h4>Avantages</h4> <ul> <li>Coût de développement et de maintenance relativement bas.</li> <li>Facilité de navigation et de mise en place.</li> <li>Bonne visibilité en ligne pour les petites entreprises.</li> </ul> <h4>Inconvénients</h4> <ul> <li>Fonctionnalités limitées.</li> <li>Interaction utilisateur restreinte.</li> <li>Peut rapidement devenir obsolète sans mises à jour régulières.</li> </ul> <h3>Sites e-commerce</h3> <p>Les sites e-commerce permettent de vendre des produits ou services en ligne. Ils incluent des fonctionnalités comme des paniers d\'achat, des systèmes de paiement en ligne, et des outils de gestion des stocks.</p> <h4>Avantages</h4> <ul> <li>Possibilité de toucher un large public mondial.</li> <li>Augmentation des ventes grâce à la disponibilité 24/7.</li> <li>Outils analytiques pour suivre et optimiser les performances.</li> </ul> <h4>Inconvénients</h4> <ul> <li>Coût de développement et de maintenance élevé.</li> <li>Nécessité de sécuriser les transactions et les données clients.</li> <li>Compétition féroce avec d\'autres sites e-commerce.</li> </ul> <h3>Blogs</h3> <p>Les blogs sont des sites où les individus ou les entreprises publient régulièrement des articles ou des billets sur divers sujets. Ils sont souvent utilisés pour partager des opinions, des nouvelles, ou des conseils.</p> <h4>Avantages</h4> <ul> <li>Facilité de création et de gestion.</li> <li>Amélioration du référencement naturel (SEO).</li> <li>Interaction avec les lecteurs à travers les commentaires.</li> </ul> <h4>Inconvénients</h4> <ul> <li>Nécessité de créer régulièrement du contenu de qualité.</li> <li>Peut nécessiter beaucoup de temps et d\'efforts pour fidéliser une audience.</li> <li>Potentiel de monétisation variable.</li> </ul> <h3>Sites communautaires</h3> <p>Les sites communautaires permettent aux utilisateurs de se connecter, de partager des informations et d\'interagir autour de centres d\'intérêt communs. Les réseaux sociaux sont des exemples populaires de sites communautaires.</p> <h4>Avantages</h4> <ul> <li>Grande interaction et engagement des utilisateurs.</li> <li>Création d\'une communauté fidèle.</li> <li>Opportunités de monétisation à travers la publicité et les abonnements.</li> </ul> <h4>Inconvénients</h4> <ul> <li>Nécessité d\'une modération active pour éviter les abus.</li> <li>Coût de maintenance et d\'hébergement élevé en cas de fort trafic.</li> <li>Problèmes potentiels de confidentialité et de sécurité des données.</li> </ul> <h3>Sites éducatifs</h3> <p>Les sites éducatifs fournissent des ressources et des informations pédagogiques. Ils peuvent offrir des cours en ligne, des tutoriels, des livres électroniques, et d\'autres matériaux d\'apprentissage.</p> <h4>Avantages</h4> <ul> <li>Accès à des ressources éducatives de qualité partout dans le monde.</li> <li>Flexibilité d\'apprentissage pour les utilisateurs.</li> <li>Possibilité de monétisation à travers les abonnements et les ventes de cours.</li> </ul> <h4>Inconvénients</h4> <ul> <li>Coût élevé de développement et de production de contenu.</li> <li>Nécessité de maintenir les informations à jour.</li> <li>Compétition avec de nombreuses autres plateformes éducatives.</li> </ul> <h2>Conclusion</h2> <p>Choisir le bon type de site internet dépend de vos objectifs, de votre budget et de votre public cible. Que vous souhaitiez présenter votre entreprise, vendre des produits, partager vos connaissances ou créer une communauté, il existe un type de site web qui répondra à vos besoins spécifiques. En pesant soigneusement les avantages et les inconvénients de chaque type de site, vous pourrez faire un choix éclairé qui maximisera votre présence en ligne.</p>"
-        }';
+    $register_data = json_encode([
+        'username' => $register_username,
+        'password' => $register_password
+    ]);
 
-        return $json;
-    } else {
+    $register_response = send_json_request($register_api_url, $register_data);
+    debug_to_console($register_response['response']);
+    debug_to_console('HTTP Code: ' . $register_response['httpcode']);
+}
 
-        return is_wp_error( $response ) ? $response->get_error_code() : wp_remote_retrieve_response_code( $response );
+function login_api($login_username, $login_password) {
+    global $api_url, $user_id;
+    $login_api_url = $api_url . 'auth/login';
+
+    $login_data = json_encode([
+        'username' => $login_username,
+        'password' => $login_password
+    ]);
+
+    $login_response = send_json_request($login_api_url, $login_data);
+
+    $response_data = json_decode($login_response['response'], true);
+
+    if (isset($response_data['success']) && $response_data['success']) {
+        $user_session = $response_data['user'];
+        $user_id = $user_session['userId'];
     }
 }
 
-function get_api_data() {
-    $result = make_api_link();
 
-    if (is_array($result)) {
-        debug_to_console($result['name'] . '\n' . $result['developers'][0]);
-        return $result['content'];
+
+function make_api_link() {
+    global $wpdb, $api_url, $user_id;
+
+    $table_name = $wpdb->prefix . 'blogai';
+    $query = $wpdb->prepare("SELECT subject, description, withImages FROM $table_name LIMIT 1");
+    $result = $wpdb->get_row($query, ARRAY_A);
+
+    if (!$result) {
+        debug_to_console('No data found in the database.');
+        return '';
+    }
+
+    $subject = $result['subject'];
+    $description = $result['description'];
+    $withImages = (bool)$result['withImages'];
+
+    $data = [
+        'subject' => $subject,
+        'description' => $description,
+        'includeImages' => $withImages,
+        'numImages' => 2,
+        'maxTokens' => 300,
+        'gptModel' => "GPT3_5"
+    ];
+
+    debug_to_console($user_id);
+    if ($user_id !== null) $data['userId'] = $user_id;
+
+    $json_data = json_encode($data);
+
+    $api_endpoint = $api_url . 'blog/generate';
+
+    $response = send_json_request($api_endpoint, $json_data);
+
+    if ($response) {
+        $decoded_response = json_decode($response, true);
+        if (json_last_error() === JSON_ERROR_NONE) {
+            return json_encode($decoded_response);
+        } else {
+            debug_to_console('Failed to decode JSON from API response: ' . json_last_error_msg());
+            return '';
+        }
     } else {
-        debug_to_console('ERROR CANNOT ESTABLISH LINK WITH API');
+        debug_to_console('No response from API');
         return '';
     }
 }
+
 
 function add_data_to_wp_posts() {
     global $wpdb;
@@ -292,8 +347,8 @@ function add_data_to_wp_posts() {
     $data = json_decode($json_data, true);
 
     if (json_last_error() === JSON_ERROR_NONE) {
-        $post_title = $data['title'];
-        $post_content = $data['content'];
+        $post_title = $data['subject'];
+        $post_content = $data['description'];
 
         $new_post = array(
             'post_title'    => $post_title,
@@ -315,6 +370,68 @@ function add_data_to_wp_posts() {
         debug_to_console('Failed to decode JSON: ' . json_last_error_msg());
     }
 }
+
+
+function send_json_request($url, $data) {
+    $ch = curl_init($url);
+
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/json',
+        'Content-Length: ' . strlen($data)
+    ]);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+
+    $response = curl_exec($ch);
+    $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+    if (curl_errno($ch)) {
+        $error_msg = curl_error($ch);
+        curl_close($ch);
+        return 'cURL error: ' . $error_msg;
+    }
+
+    curl_close($ch);
+    return array('response' => $response, 'httpcode' => $httpcode);
+}
+
+
+
+
+/*function get_api_data() {
+    $result = make_api_link();
+
+    if (is_array($result)) {
+        debug_to_console($result['name'] . '\n' . $result['developers'][0]);
+        return $result['content'];
+    } else {
+        debug_to_console('ERROR CANNOT ESTABLISH LINK WITH API');
+        return '';
+    }
+}*/
+
+/*function send_json_request($url, $data) {
+    $response = wp_remote_post($url, [
+        'body'    => $data,
+        'headers' => [
+            'Content-Type' => 'application/json',
+        ],
+        'method'  => 'POST',
+        'data_format' => 'body',
+    ]);
+
+    if (is_wp_error($response)) {
+        return "WordPress Error: " . $response->get_error_message();
+    }
+
+    return wp_remote_retrieve_body($response);
+}*/
+
+
 
 
 // ///// // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ // ///// //
