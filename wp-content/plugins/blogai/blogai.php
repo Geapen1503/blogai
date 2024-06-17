@@ -276,18 +276,15 @@ function login_api($login_username, $login_password) {
 
     $login_response = send_json_request($login_api_url, $login_data);
 
-    $response_data = json_decode($login_response['response'], true);
 
-    if (isset($response_data['success']) && $response_data['success']) {
-        $user_session = $response_data['user'];
-        $user_id = $user_session['userId'];
-    }
+
+
 }
 
 
 
 function make_api_link() {
-    global $wpdb, $api_url, $user_id;
+    global $wpdb, $api_url;
 
     $table_name = $wpdb->prefix . 'blogai';
     $query = $wpdb->prepare("SELECT subject, description, withImages FROM $table_name LIMIT 1");
@@ -311,8 +308,6 @@ function make_api_link() {
         'gptModel' => "GPT3_5"
     ];
 
-    debug_to_console($user_id);
-    if ($user_id !== null) $data['userId'] = $user_id;
 
     $json_data = json_encode($data);
 
