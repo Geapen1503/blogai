@@ -243,10 +243,6 @@ echo '
                 </select>
             </div>
             <div class="inputBoxes">
-                <label><span class="labelSpan">* </span>The subject:</label>
-                <textarea name="subject" placeholder="Subject of the post..." required></textarea>
-            </div>
-            <div class="inputBoxes">
                 <label><span class="labelSpan">* </span>The description:</label>
                 <textarea name="description" placeholder="Description of the post..." required></textarea>
             </div>
@@ -275,11 +271,10 @@ echo '
 ';
 
 
-global $frequency_input, $subject_input, $description_input, $sketch_input, $w_img_input, $gen_now_input;
+global $frequency_input, $description_input, $sketch_input, $w_img_input, $gen_now_input;
 
 if (isset($_POST['submit'])) {
     $frequency_input = $_POST['frequency'];
-    $subject_input = $_POST['subject'];
     $description_input = $_POST['description'];
     $sketch_input = isset($_POST['sketch_input']) ? true : false;
     $w_img_input = isset($_POST['withImage']) ? true : false;

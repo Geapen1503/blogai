@@ -79,7 +79,6 @@ function create_blogai_table() {
     $create_table_sql = "CREATE TABLE IF NOT EXISTS $table_name (
         id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         frequency VARCHAR(3) NOT NULL CHECK (frequency REGEXP '^(1d|3d|1w|2w|1m|3m)$'),
-        subject VARCHAR(250) NOT NULL,
         description VARCHAR(250),
         withImages BOOLEAN DEFAULT FALSE,
         sketch_input BOOLEAN DEFAULT TRUE,
@@ -112,7 +111,7 @@ function on_delete_plugin() {
 
 
 function update_table_html_data() {
-    global $frequency_input, $subject_input, $description_input, $sketch_input, $w_img_input, $gen_now_input, $wpdb;
+    global $frequency_input, $description_input, $sketch_input, $w_img_input, $gen_now_input, $wpdb;
 
     $table_name = $wpdb->prefix . 'blogai';
 
@@ -120,12 +119,11 @@ function update_table_html_data() {
     $row_count = $wpdb->get_var($check_query);
 
     if ($row_count > 0) {
-        $update_query = "UPDATE $table_name SET frequency = %s, subject = %s, description = %s, withImages = %d, sketch_input = %d, generate_now = %d LIMIT 1";
-        $wpdb->query($wpdb->prepare($update_query, $frequency_input, $subject_input, $description_input, $w_img_input, $sketch_input, $gen_now_input));
+        $update_query = "UPDATE $table_name SET frequency = %s, description = %s, withImages = %d, sketch_input = %d, generate_now = %d LIMIT 1";
+        $wpdb->query($wpdb->prepare($update_query, $frequency_input, $description_input, $w_img_input, $sketch_input, $gen_now_input));
     } else {
         $wpdb->insert($table_name, array(
             'frequency' => $frequency_input,
-            'subject' => $subject_input,
             'description' => $description_input,
             'withImages' => $w_img_input,
             'sketch_input' => $sketch_input,
@@ -287,7 +285,7 @@ function make_api_link() {
     global $wpdb, $api_url;
 
     $table_name = $wpdb->prefix . 'blogai';
-    $query = $wpdb->prepare("SELECT subject, description, withImages FROM $table_name LIMIT 1");
+    $query = $wpdb->prepare("SELECT description, withImages FROM $table_name LIMIT 1");
     $result = $wpdb->get_row($query, ARRAY_A);
 
     if (!$result) {
@@ -295,12 +293,10 @@ function make_api_link() {
         return '';
     }
 
-    $subject = $result['subject'];
     $description = $result['description'];
     $withImages = (bool)$result['withImages'];
 
     $data = [
-        'subject' => $subject,
         'description' => $description,
         'includeImages' => $withImages,
         'numImages' => 2,
@@ -342,11 +338,9 @@ function add_data_to_wp_posts() {
     $data = json_decode($json_data, true);
 
     if (json_last_error() === JSON_ERROR_NONE) {
-        $post_title = $data['subject'];
         $post_content = $data['description'];
 
         $new_post = array(
-            'post_title'    => $post_title,
             'post_content'  => $post_content,
             'post_status'   => $status_for_post,
             'post_author'   => get_current_user_id(),
