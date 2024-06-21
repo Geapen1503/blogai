@@ -82,17 +82,16 @@ function create_blogai_table() {
         description VARCHAR(250),
         withImages BOOLEAN DEFAULT FALSE,
         sketch_input BOOLEAN DEFAULT TRUE,
-        generate_now BOOLEAN DEFAULT FALSE
+        generate_now BOOLEAN DEFAULT FALSE,
+        user_api_key VARCHAR(255) NOT NULL
     )";
 
     require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
     $result = dbDelta($create_table_sql);
 
-    if (is_array($result) && !empty($result)) {
-        debug_to_console('Table blogai created successfully');
-    } else {
-        debug_to_console('Failed to create table blogai: ' . print_r($result, true));
-    }
+
+    if (is_array($result) && !empty($result)) debug_to_console('Table blogai created successfully');
+    else debug_to_console('Failed to create table blogai: ' . print_r($result, true));
 }
 
 
@@ -111,7 +110,7 @@ function on_delete_plugin() {
 
 
 function update_table_html_data() {
-    global $frequency_input, $description_input, $sketch_input, $w_img_input, $gen_now_input, $wpdb;
+    global $frequency_input, $description_input, $sketch_input, $w_img_input, $gen_now_input, $user_api_key, $wpdb;
 
     $table_name = $wpdb->prefix . 'blogai';
 
@@ -119,20 +118,22 @@ function update_table_html_data() {
     $row_count = $wpdb->get_var($check_query);
 
     if ($row_count > 0) {
-        $update_query = "UPDATE $table_name SET frequency = %s, description = %s, withImages = %d, sketch_input = %d, generate_now = %d LIMIT 1";
-        $wpdb->query($wpdb->prepare($update_query, $frequency_input, $description_input, $w_img_input, $sketch_input, $gen_now_input));
+        $update_query = "UPDATE $table_name SET frequency = %s, description = %s, withImages = %d, sketch_input = %d, generate_now = %d, user_api_key = %s LIMIT 1";
+        $wpdb->query($wpdb->prepare($update_query, $frequency_input, $description_input, $w_img_input, $sketch_input, $gen_now_input, $user_api_key));
     } else {
         $wpdb->insert($table_name, array(
             'frequency' => $frequency_input,
             'description' => $description_input,
             'withImages' => $w_img_input,
             'sketch_input' => $sketch_input,
-            'generate_now' => $gen_now_input
+            'generate_now' => $gen_now_input,
+            'user_api_key' => $user_api_key
         ));
     }
 
     debug_to_console('Table blogai updated successfully');
 }
+
 
 
 
@@ -248,44 +249,11 @@ function update_schedule_event() {
 // ///// // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ // ///// //
 
 
-
-function register_api($register_username, $register_password) {
-    global $api_url;
-    $register_api_url = $api_url . 'auth/register';
-
-    $register_data = json_encode([
-        'username' => $register_username,
-        'password' => $register_password
-    ]);
-
-    $register_response = send_json_request($register_api_url, $register_data);
-    debug_to_console($register_response['response']);
-    debug_to_console('HTTP Code: ' . $register_response['httpcode']);
-}
-
-function login_api($login_username, $login_password) {
-    global $api_url, $user_id;
-    $login_api_url = $api_url . 'auth/login';
-
-    $login_data = json_encode([
-        'username' => $login_username,
-        'password' => $login_password
-    ]);
-
-    $login_response = send_json_request($login_api_url, $login_data);
-
-
-
-
-}
-
-
-
 function make_api_link() {
     global $wpdb, $api_url;
 
     $table_name = $wpdb->prefix . 'blogai';
-    $query = $wpdb->prepare("SELECT description, withImages FROM $table_name LIMIT 1");
+    $query = $wpdb->prepare("SELECT description, withImages, user_api_key FROM $table_name LIMIT 1");
     $result = $wpdb->get_row($query, ARRAY_A);
 
     if (!$result) {
@@ -295,13 +263,15 @@ function make_api_link() {
 
     $description = $result['description'];
     $withImages = (bool)$result['withImages'];
+    $user_api_key = $result['user_api_key'];
 
     $data = [
         'description' => $description,
         'includeImages' => $withImages,
         'numImages' => 2,
         'maxTokens' => 300,
-        'gptModel' => "GPT3_5"
+        'gptModel' => "GPT3_5",
+        'apiKey' => $user_api_key,
     ];
 
 
@@ -338,7 +308,7 @@ function add_data_to_wp_posts() {
     $data = json_decode($json_data, true);
 
     if (json_last_error() === JSON_ERROR_NONE) {
-        $post_content = $data['description'];
+        $post_content = $data['article'];
 
         $new_post = array(
             'post_content'  => $post_content,
