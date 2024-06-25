@@ -69,6 +69,7 @@ function blogai_is_active() {
     //get_api_data();
 
     create_blogai_table();
+    //add_data_to_wp_posts();
 }
 
 function create_blogai_table() {
@@ -268,21 +269,22 @@ function make_api_link() {
     $data = [
         'description' => $description,
         'includeImages' => $withImages,
-        'numImages' => 2,
-        'maxTokens' => 300,
-        'gptModel' => "GPT3_5",
+        'numImages' => 1,
+        'maxTokens' => 1200,
+        'gptModel' => "GPT4",
         'apiKey' => $user_api_key,
     ];
 
-
     $json_data = json_encode($data);
-
     $api_endpoint = $api_url . 'blog/generate';
 
     $response = send_json_request($api_endpoint, $json_data);
 
     if ($response) {
-        $decoded_response = json_decode($response, true);
+        if (is_array($response)) $decoded_response = $response;
+        else $decoded_response = json_decode($response, true);
+
+
         if (json_last_error() === JSON_ERROR_NONE) {
             return json_encode($decoded_response);
         } else {
@@ -299,6 +301,7 @@ function make_api_link() {
 function add_data_to_wp_posts() {
     global $wpdb;
 
+
     $table_name = $wpdb->prefix . 'blogai';
     $query = "SELECT sketch_input FROM $table_name";
     $row_count = $wpdb->get_var($query);
@@ -309,8 +312,10 @@ function add_data_to_wp_posts() {
 
     if (json_last_error() === JSON_ERROR_NONE) {
         $post_content = $data['article'];
+        //$post_title = $data['title'];
 
         $new_post = array(
+            'post_title' => 'Article',
             'post_content'  => $post_content,
             'post_status'   => $status_for_post,
             'post_author'   => get_current_user_id(),
@@ -320,11 +325,8 @@ function add_data_to_wp_posts() {
 
         $post_id = wp_insert_post($new_post);
 
-        if (!is_wp_error($post_id)) {
-            debug_to_console('Post added successfully with ID: ' . $post_id);
-        } else {
-            debug_to_console('Failed to add post: ' . $post_id->get_error_message());
-        }
+        if (!is_wp_error($post_id)) debug_to_console('Post added successfully with ID: ' . $post_id);
+        else debug_to_console('Failed to add post: ' . $post_id->get_error_message());
     } else {
         debug_to_console('Failed to decode JSON: ' . json_last_error_msg());
     }
@@ -357,38 +359,6 @@ function send_json_request($url, $data) {
     curl_close($ch);
     return array('response' => $response, 'httpcode' => $httpcode);
 }
-
-
-
-
-/*function get_api_data() {
-    $result = make_api_link();
-
-    if (is_array($result)) {
-        debug_to_console($result['name'] . '\n' . $result['developers'][0]);
-        return $result['content'];
-    } else {
-        debug_to_console('ERROR CANNOT ESTABLISH LINK WITH API');
-        return '';
-    }
-}*/
-
-/*function send_json_request($url, $data) {
-    $response = wp_remote_post($url, [
-        'body'    => $data,
-        'headers' => [
-            'Content-Type' => 'application/json',
-        ],
-        'method'  => 'POST',
-        'data_format' => 'body',
-    ]);
-
-    if (is_wp_error($response)) {
-        return "WordPress Error: " . $response->get_error_message();
-    }
-
-    return wp_remote_retrieve_body($response);
-}*/
 
 
 
