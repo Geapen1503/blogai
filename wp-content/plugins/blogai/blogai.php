@@ -250,8 +250,85 @@ function update_schedule_event() {
 // ///// // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ // ///// //
 
 
+function send_post_request() {
+    global $api_url, $wpdb;
+
+    $url = $api_url . 'blog/generate';
+    $ch = curl_init($url);
+
+    $table_name = $wpdb->prefix . 'blogai';
+    $query = $wpdb->prepare("SELECT description, withImages, user_api_key FROM $table_name LIMIT 1");
+    $result = $wpdb->get_row($query, ARRAY_A);
+
+    if (!$result) {
+        debug_to_console('No data found in the database.');
+        return '';
+    }
+
+    $description = $result['description'];
+    $withImages = (bool)$result['withImages'];
+    $user_api_key = $result['user_api_key'];
+
+    $data = [
+        'description' => $description,
+        'includeImages' => $withImages,
+        'numImages' => 1,
+        'maxTokens' => 1200,
+        'gptModel' => "GPT3_5",
+        'apiKey' => $user_api_key,
+    ];
+
+    $payload = json_encode($data);
+
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
+
+    $response = curl_exec($ch);
+
+    curl_close($ch);
+
+    return $response;
+}
+
+
 function add_data_to_wp_posts() {
-    
+    global $wpdb;
+
+    $table_name = $wpdb->prefix . 'blogai';
+    $query = "SELECT sketch_input FROM $table_name";
+    $row_count = $wpdb->get_var($query);
+
+    $status_for_post = $row_count ? 'publish' : 'draft';
+    $json_data = send_post_request();
+    $data = json_decode($json_data, true);
+
+    if (json_last_error() === JSON_ERROR_NONE) {
+        $post_content = $data['article'];
+        $post_title = $data['title'];
+        $post_css = $data['cssStyles'];
+
+        $new_post = array(
+            'post_title' => $post_title,
+            'post_content'  => $post_content,
+            'post_status'   => $status_for_post,
+            'post_author'   => get_current_user_id(),
+            'post_date'     => current_time('mysql'),
+            'post_type'     => 'post'
+        );
+
+        $post_id = wp_insert_post($new_post);
+
+        if (!is_wp_error($post_id)) {
+            debug_to_console('Post added successfully with ID: ' . $post_id);
+            add_post_meta($post_id, '_custom_css', $post_css, true);
+        } else {
+            debug_to_console('Failed to add post: ' . $post_id->get_error_message());
+        }
+    } else {
+        debug_to_console('Failed to decode JSON: ' . json_last_error_msg());
+    }
 }
 
 
