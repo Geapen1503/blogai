@@ -250,7 +250,13 @@ function update_schedule_event() {
 // ///// // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ // ///// //
 
 
-function make_api_link() {
+function add_data_to_wp_posts() {
+    
+}
+
+
+
+/*function make_api_link() {
     global $wpdb, $api_url;
 
     $table_name = $wpdb->prefix . 'blogai';
@@ -271,7 +277,7 @@ function make_api_link() {
         'includeImages' => $withImages,
         'numImages' => 1,
         'maxTokens' => 1200,
-        'gptModel' => "GPT4",
+        'gptModel' => "GPT3_5",
         'apiKey' => $user_api_key,
     ];
 
@@ -359,7 +365,7 @@ function send_json_request($url, $data) {
     curl_close($ch);
     return array('response' => $response, 'httpcode' => $httpcode);
 }
-
+*/
 
 
 
