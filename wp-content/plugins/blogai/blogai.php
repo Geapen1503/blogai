@@ -308,6 +308,7 @@ function add_data_to_wp_posts() {
         $post_content = $data['article'];
         $post_title = $data['title'];
         $post_css = $data['cssStyles'];
+        $img_list = $data['imgList'];
 
         $new_post = array(
             'post_title' => $post_title,
